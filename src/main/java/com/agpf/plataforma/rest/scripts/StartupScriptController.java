@@ -25,15 +25,23 @@ public class StartupScriptController {
     }
 
     @PostMapping(value = "/start/{id}/{*path}")
-    ResponseEntity<ResponseMessageDTO> startProjectLocal(@PathVariable UUID id, @PathVariable String path) {
-        var response = startupScriptService.iniciaProjetoLocal(id, path);
+    ResponseEntity<ResponseMessageDTO> startProjectLocal(@PathVariable UUID id,
+                                                         @PathVariable String path, @RequestParam String title) {
+        var response = startupScriptService.iniciaProjetoLocal(id, path, title);
         return ResponseEntity.ok(new ResponseMessageDTO(response));
     }
 
     @PostMapping(value = "/stop/{id}/{*path}")
-    ResponseEntity<ResponseMessageDTO> encerraProjetoLocal(@PathVariable UUID id, @PathVariable String path) {
-        var response = startupScriptService.encerraProcesso(id, path);
+    ResponseEntity<ResponseMessageDTO> encerraProjetoLocal(@PathVariable UUID id,
+                                                           @PathVariable String path, @RequestParam String title) {
+        var response = startupScriptService.encerraProcesso(id, path, title);
         return ResponseEntity.ok(new ResponseMessageDTO(response));
+    }
+
+    @GetMapping(value = "/get-log/{id}")
+    ResponseEntity<String> obtemLogDoProjeto(@PathVariable UUID id, @RequestParam String title) {
+        String log = startupScriptService.obtemLogs(id, title);
+        return ResponseEntity.ok(log);
     }
 
 }

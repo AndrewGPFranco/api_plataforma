@@ -24,8 +24,8 @@ import java.util.stream.Collectors;
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
-    private final StartupScriptRepository startupScriptRepository;
     private final ScriptsEmExecucao scriptsEmExecucao;
+    private final StartupScriptRepository startupScriptRepository;
 
     @Transactional
     public OutputProjectDTO createProject(CreateProjectDTO dto) {
@@ -46,7 +46,7 @@ public class ProjectService {
         return projects.stream().map(project -> OutputProjectDTO.fromEntity(project,
                 scriptsPorProjeto.getOrDefault(project.getId(), List.of()).stream()
                         .map(script -> OutputScriptDTO.fromEntity(script,
-                                scriptsEmExecucao.rodando(project.getId(), script.getPathProject())))
+                                scriptsEmExecucao.rodando(project.getId(), script.getPathProject(), script.getTitle())))
                         .toList())).toList();
     }
 

@@ -40,8 +40,8 @@ public class StartupScriptService {
     }
 
     @Transactional(readOnly = true)
-    public String iniciaProjetoLocal(UUID id, String path) {
-        if (scriptsEmExecucao.rodando(id, path))
+    public String iniciaProjetoLocal(UUID id, String path, String title) {
+        if (scriptsEmExecucao.rodando(id, path, title))
             throw new ConflictException("Script já em execução");
 
         var startupScript = startupScriptRepository.findFirstByProjectIdAndPathProject(id, path)
@@ -52,7 +52,7 @@ public class StartupScriptService {
         if (startupScript.getPathProject() != null && !startupScript.getPathProject().isBlank())
             processBuilder.directory(new File(startupScript.getPathProject()));
 
-        Path arquivo = pastaLogs.resolve(id.toString().concat(startupScript.getTitle()).concat(".log"));
+        Path arquivo = pastaLogs.resolve(geraNomeLog(id, startupScript.getTitle()));
         processBuilder.redirectOutput(arquivo.toFile());
 
         Process process;
@@ -64,21 +64,21 @@ public class StartupScriptService {
         }
 
         long pid = process.pid();
-        scriptsEmExecucao.marcar(id, path, pid);
+        scriptsEmExecucao.marcar(id, path, pid, title);
         log.info("Projeto {} iniciado (pid {}) com: {}", id, pid, startupScript.getScript());
 
         process.onExit().thenRun(() -> {
-            scriptsEmExecucao.remover(id, path);
+            scriptsEmExecucao.remover(id, path, title);
             log.info("Projeto {} (pid {}) finalizado.", id, pid);
         });
 
         return "Ambiente local inicializado.";
     }
 
-    public String encerraProcesso(UUID id, String path) {
-        long pid = scriptsEmExecucao.devolvePidProcesso(id, path)
+    public String encerraProcesso(UUID id, String path, String title) {
+        long pid = scriptsEmExecucao.devolvePidProcesso(id, path, title)
                 .orElseThrow(() -> new NotFoundException("Script não está em execução"));
-
+        String nomeArquivo = geraNomeLog(id, title);
         try {
             int exitCode = new ProcessBuilder("kill", "-TERM", "--", "-" + pid).start().waitFor();
             if (exitCode != 0)
@@ -91,7 +91,27 @@ public class StartupScriptService {
             throw new ScriptExecutionException("Não foi possível encerrar o processo.", e);
         }
 
+        try {
+            Files.deleteIfExists(pastaLogs.resolve(nomeArquivo));
+        } catch (IOException io) {
+            log.warn("Não foi possível excluir o log {}: {}", nomeArquivo, io.getMessage());
+        }
+
         return "Processo encerrado.";
     }
 
+    private String geraNomeLog(UUID id, String title) {
+        return id.toString().concat(title).concat(".log");
+    }
+
+    public String obtemLogs(UUID id, String title) {
+        Path arquivo = pastaLogs.resolve(geraNomeLog(id, title));
+        if (!Files.exists(arquivo)) return null;
+
+        try {
+            return Files.readString(arquivo);
+        } catch (IOException io) {
+            throw new RuntimeException("Ocorreu um erro ao montar a resposta do log", io);
+        }
+    }
 }
