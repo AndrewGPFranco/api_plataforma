@@ -20,13 +20,13 @@ public class StartupScriptController {
 
     @PostMapping(value = {"", "/"})
     ResponseEntity<ResponseMessageDTO> newScript(@RequestBody @Valid InputStartupScriptDTO dto) {
-        var response = startupScriptService.newScript(dto);
+        var response = startupScriptService.registraNovoScript(dto);
         return ResponseEntity.status(HttpStatus.CREATED.value()).body(new ResponseMessageDTO(response));
     }
 
     @PostMapping(value = "/start/{id}/{*path}")
     ResponseEntity<ResponseMessageDTO> startProjectLocal(@PathVariable UUID id, @PathVariable String path) {
-        var response = startupScriptService.startProjectLocalhost(id, path);
+        var response = startupScriptService.iniciaProjetoLocal(id, path);
         return ResponseEntity.ok(new ResponseMessageDTO(response));
     }
 

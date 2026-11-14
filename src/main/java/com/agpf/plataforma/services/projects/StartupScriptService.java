@@ -13,6 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.UUID;
 
 @Slf4j
@@ -20,12 +24,14 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class StartupScriptService {
 
-    private final StartupScriptRepository startupScriptRepository;
     private final ProjectRepository projectRepository;
     private final ScriptsEmExecucao scriptsEmExecucao;
+    private final StartupScriptRepository startupScriptRepository;
+
+    private final Path pastaLogs = Paths.get("logs");
 
     @Transactional
-    public String newScript(InputStartupScriptDTO dto) {
+    public String registraNovoScript(InputStartupScriptDTO dto) {
         var project = projectRepository.findById(dto.projectId())
                 .orElseThrow(() -> new NotFoundException("Projeto não encontrado!"));
 
@@ -34,7 +40,7 @@ public class StartupScriptService {
     }
 
     @Transactional(readOnly = true)
-    public String startProjectLocalhost(UUID id, String path) {
+    public String iniciaProjetoLocal(UUID id, String path) {
         if (scriptsEmExecucao.rodando(id, path))
             throw new ConflictException("Script já em execução");
 
@@ -45,6 +51,9 @@ public class StartupScriptService {
         var processBuilder = new ProcessBuilder("setsid", "sh", "-c", startupScript.getScript()).inheritIO();
         if (startupScript.getPathProject() != null && !startupScript.getPathProject().isBlank())
             processBuilder.directory(new File(startupScript.getPathProject()));
+
+        Path arquivo = pastaLogs.resolve(id.toString().concat(startupScript.getTitle()).concat(".log"));
+        processBuilder.redirectOutput(arquivo.toFile());
 
         Process process;
         try {
