@@ -6,6 +6,7 @@ import com.agpf.plataforma.exceptions.NotFoundException;
 import com.agpf.plataforma.exceptions.ScriptExecutionException;
 import com.agpf.plataforma.repositories.projects.ProjectRepository;
 import com.agpf.plataforma.repositories.projects.StartupScriptRepository;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -114,4 +115,17 @@ public class StartupScriptService {
             throw new RuntimeException("Ocorreu um erro ao montar a resposta do log", io);
         }
     }
+
+    @PreDestroy
+    private void deletaArquivoLogs() {
+        File pasta = new File(pastaLogs.toUri());
+        for (File arquivoLog : pasta.listFiles()) {
+            try {
+                Files.delete(pastaLogs.resolve(arquivoLog.getName()));
+            } catch (IOException io) {
+                log.error("Erro ao deletar o arquivo: {}", arquivoLog.getName());
+            }
+        }
+    }
+
 }
