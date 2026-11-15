@@ -13,7 +13,8 @@ spring:
     baseline-version: 4
   data:
     redis:
-      host: localhost
-      port: 6382
+      host: ${HOST_REDIS_PLATAFORMA:localhost}
+      port: ${PORT_REDIS_PLATAFORMA:6382}
+      password: ${PASSWORD_REDIS_PLATAFORMA:}
 server:
   port: ${PORT:8008}
