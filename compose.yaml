@@ -11,8 +11,16 @@ services:
       - '5488:5432'
     volumes:
       - postgres-data:/var/lib/postgresql/data
+  redis:
+    image: redis:latest
+    container_name: redis_plataforma
+    ports:
+      - "6382:6379"
+    volumes:
+      - redis_data:/data
 
 volumes:
   postgres-data:
     external: true
     name: plataform_postgres-data
+  redis_data:
